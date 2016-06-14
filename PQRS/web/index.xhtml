@@ -1,0 +1,508 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+			xmlns:h="http://xmlns.jcp.org/jsf/html"
+			xmlns:p="http://primefaces.org/ui"
+			xmlns:f="http://xmlns.jcp.org/jsf/core"
+			xmlns:c="http://xmlns.jcp.org/jsp/jstl/core">
+	<h:head>
+		<title><h:outputText value="#{msg.titulo}" /></title>
+
+		<link rel="stylesheet" type="text/css" href="css/style.css" />
+	</h:head>
+	<h:body>
+		<h:form>
+			<h:commandButton action="#{clienteBean.changeLanguage('')}" value="English" image="http://estaticos01.elmundo.es/elmundodeporte/especiales/2009/06/copa_confederaciones/img/banderas/eeuu_peq.png" /> <!--Botón para cambiar al idioma inglés -->
+			<h:commandButton action="#{clienteBean.changeLanguage('es')}" value="Español" image="http://es.cyberdodo.com/templates/default/img/header-icons/es.png" /> <!--Botón para cambiar al idioma español -->
+		</h:form>
+		<c:if test="#{not empty clienteBean.cliente}">
+			<h3>#{msg.cliente_titulo}</h3>
+
+			<h4>#{msg.usuario_conectado} #{clienteBean.cliente.nombres} #{clienteBean.cliente.apellidos}</h4>
+			<h:form prependId="false">
+				<p:commandButton id="botonCerrar" value="#{msg.cerrar_sesion}" actionListener="#{clienteBean.cerrarSesion}" ajax="false" />
+			</h:form>
+
+			<p:tabView>
+				<p:tab title="#{msg.registrar_pqrs_titulo}">
+					<h:form prependId="false">
+						<h:panelGrid columns="3" cellpadding="10">
+							<p:outputLabel value="#{msg.codigo}" for="codigo" />
+							<p:inputText id="codigo" label="#{msg.codigo}" value="#{pqrsBean.codigo}" readonly="true">
+								<f:attribute name="requiredMessage" value="#{msg.codigo_requerido}" />
+							</p:inputText>
+							<p:message for="codigo" styleClass="errmsg" />
+
+							<p:outputLabel for="tipo" value="#{msg.tipo}" />
+							<p:selectOneMenu id="tipo" value="#{pqrsBean.tipo}">
+								<f:selectItem itemLabel="#{msg.peticion}" itemValue="peticion" />
+								<f:selectItem itemLabel="#{msg.queja}" itemValue="queja" />
+								<f:selectItem itemLabel="#{msg.reclamo}" itemValue="reclamo" />
+								<f:selectItem itemLabel="#{msg.sugerencia}" itemValue="sugerencia" />
+							</p:selectOneMenu>
+							<p:message for="tipo" styleClass="errmsg" />
+
+							<p:outputLabel for="fechaHechos" value="#{msg.fecha_hechos}" />
+							<p:calendar id="fechaHechos" value="#{pqrsBean.fechaHechos}" showOn="button" pattern="yyyy-MM-dd"/>
+							<p:message for="fechaHechos" styleClass="errmsg" />
+
+							<p:outputLabel for="codigoAeropuerto" value="#{msg.aeropuerto}" />
+							<p:selectOneMenu id="codigoAeropuerto" value="#{pqrsBean.codigoAeropuerto}">
+								<c:forEach items="#{pqrsBean.consultarAeropuertos()}" var="aeropuerto">
+									<f:selectItem itemLabel="#{aeropuerto.pais} - #{aeropuerto.ciudad} - #{aeropuerto.nombre}" itemValue="#{aeropuerto.codigo}" />
+								</c:forEach>
+							</p:selectOneMenu>
+							<p:message for="codigoAeropuerto" styleClass="errmsg" />
+
+							<p:outputLabel value="#{msg.descripcion}" for="descripcion" />
+							<p:inputTextarea id="descripcion" label="#{msg.descripcion}" value="#{pqrsBean.descripcion}" required="true">
+								<f:attribute name="requiredMessage" value="#{msg.descripcion_requerida}" />
+							</p:inputTextarea>
+							<p:message for="descripcion" styleClass="errmsg" />
+
+							<p:outputLabel value="Adjuntar archivo" for="anexo" />
+							<p:fileUpload id="anexo" label="Agregar" mode="advanced" multiple="true" auto="true" update="messages" fileUploadListener="#{pqrsBean.subirAnexo}" />
+							<p:growl id="messages" showDetail="true" />
+
+							<p:commandButton id="botonRegistro1" value="#{msg.registrar}" actionListener="#{pqrsBean.registrar}" ajax="false" />
+						</h:panelGrid>
+					</h:form>
+				</p:tab>
+				<p:tab title="#{msg.consultar_pqrs_titulo}">
+					<h:form prependId="false">
+						<p:outputLabel value="#{msg.consultar_pqrs}" for="consultarPqrs" />
+						<p:inputText id="consultarPqrs" label="#{msg.consultar_pqrs}" value="#{pqrsBean.codigoBusqueda}" required="true">
+							<f:attribute name="requiredMessage" value="#{msg.consultar_pqrs_requerido}" />
+						</p:inputText>
+						<p:message for="consultarPqrs" styleClass="errmsg" />
+
+						<p:commandButton id="botonConsultar" value="#{msg.consultar}" actionListener="#{pqrsBean.consultar}" ajax="false" />
+
+					</h:form>
+
+					<br />
+					<br />
+
+					<h:form prependId="false">
+						<p:dataList value="#{clienteBean.pqrs}" var="pqrs" type="unordered" itemType="none" paginator="true" rows="10" styleClass="paginated">
+							<f:facet name="header">#{msg.pqrs}</f:facet>
+							<p:commandLink title="#{msg.buscar}" styleClass="ui-icon ui-icon-search" style="float:left;margin-right:10px" ajax="false">
+								<f:setPropertyActionListener value="#{pqrs}" target="#{pqrsBean.selectedPqrs}" />
+								<h:outputText value="#{pqrs.codigo}" />
+							</p:commandLink>
+							<h:outputText value="#{pqrs.codigo}, #{pqrs.tipo}" style="display:inline-block"/>
+						</p:dataList>
+					</h:form>
+
+					<hr />
+
+
+					<p:panelGrid  columns="2" rendered="#{not empty pqrsBean.selectedPqrs}" columnClasses="label,value">
+						<h:outputText value="#{msg.codigo}" />
+						<h:outputText value="#{pqrsBean.selectedPqrs.codigo}" />
+
+						<h:outputText value="#{msg.tipo}" />
+						<h:outputText value="#{pqrsBean.selectedPqrs.tipo}" />
+
+						<h:outputText value="#{msg.cliente}" />
+						<h:outputText value="#{pqrsBean.selectedPqrs.tipoDocCliente} #{pqrsBean.selectedPqrs.numeroDocCliente}"/>
+
+						<h:outputText value="#{msg.fecha}" />
+						<h:outputText value="#{pqrsBean.selectedPqrs.fechaPQRS}" />
+
+						<h:outputText value="#{msg.fecha_hechos}" />
+						<h:outputText value="#{pqrsBean.selectedPqrs.fechaHechos}" />
+
+						<h:outputText value="#{msg.aeropuerto}" />
+						<h:outputText value="#{pqrsBean.selectedPqrs.codigoAeropuerto}" />
+
+						<h:outputText value="#{msg.descripcion}" />
+						<h:outputText value="#{pqrsBean.selectedPqrs.descripcion}" />
+					</p:panelGrid>
+
+					<h:form>
+						<p:panelGrid rendered="#{not empty pqrsBean.selectedPqrs}" columnClasses="label,value">
+							<p:row>
+								<p:column colspan="2">Anexos</p:column>
+							</p:row>
+							<c:forEach items="#{pqrsBean.selectedAnexos}" var="anexo">
+								<p:row>
+									<p:column>
+										<h:outputText value="#{anexo.name}" />
+									</p:column>
+									<p:column>
+										<p:commandButton value="Descargar" ajax="false" icon="ui-icon-arrowthick-1-s">
+											<p:fileDownload value="#{pqrsBean.descargar(anexo)}" />
+										</p:commandButton>
+									</p:column>
+								</p:row>
+							</c:forEach>
+						</p:panelGrid>
+
+					</h:form>
+
+					<p:panelGrid rendered="#{not empty pqrsBean.selectedEstados}" columnClasses="label,value">
+						<p:row>
+							<p:column colspan="2">Estados</p:column>
+						</p:row>
+						<c:forEach items="#{pqrsBean.selectedEstados}" var="estado">
+							<p:row>
+								<p:column>
+									<h:outputText value="#{msg.codigo}" />
+								</p:column>
+								<p:column>
+									<h:outputText value="#{estado.estadoPK.codigo}" />
+								</p:column>
+							</p:row>
+							<p:row>
+								<p:column>
+									<h:outputText value="#{msg.fecha}" />
+								</p:column>
+								<p:column>
+									<h:outputText value="#{estado.fecha}" />
+								</p:column>
+							</p:row>
+							<p:row>
+								<p:column>
+									<h:outputText value="Estado" />
+								</p:column>
+								<p:column>
+									<h:outputText value="#{estado.estado}" />
+								</p:column>
+							</p:row>
+							<p:row>
+								<p:column>
+									<h:outputText value="#{msg.descripcion}" />
+								</p:column>
+								<p:column>
+									<h:outputText value="#{estado.descripcion}" />
+								</p:column>
+							</p:row>
+						</c:forEach>
+					</p:panelGrid>
+
+					<c:if test="#{not empty pqrsBean.error}">
+						<h:outputText style="color: #FF0000" value="#{pqrsBean.error}" />
+					</c:if>
+				</p:tab>
+			</p:tabView>
+		</c:if>
+		<c:if test="#{not empty personalBean.personal}">
+			<h3>#{msg.personal_titulo}</h3>
+
+			<h:form prependId="false">
+				<h4>#{msg.usuario_conectado} #{personalBean.personal.nombres} #{personalBean.personal.apellidos}</h4>
+				<p:commandButton id="botonCerrar" value="#{msg.cerrar_sesion}" actionListener="#{personalBean.cerrarSesion}" ajax="false" />
+			</h:form>
+
+			<hr />
+      
+			<h:form prependId="false">
+				<p:outputLabel value="#{msg.consultar_pqrs}" for="consultarPqrs" />
+				<p:inputText id="consultarPqrs" label="#{msg.consultar_pqrs}" value="#{pqrsBean.codigoBusqueda}" required="true">
+					<f:attribute name="requiredMessage" value="#{msg.consultar_pqrs_requerido}" />
+				</p:inputText>
+				<p:message for="consultarPqrs" styleClass="errmsg" />
+
+				<p:commandButton id="botonConsultar" value="#{msg.consultar}" actionListener="#{pqrsBean.consultar}" ajax="false" />
+
+			</h:form>
+
+			<br />
+			<br />
+
+			<h:form prependId="false">
+				<p:dataList value="#{personalBean.pqrs}" var="pqrs" type="unordered" itemType="none" paginator="true" rows="10" styleClass="paginated">
+					<f:facet name="header">#{msg.pqrs}</f:facet>
+					<p:commandLink title="#{msg.buscar}" styleClass="ui-icon ui-icon-search" style="float:left;margin-right:10px" ajax="false">
+						<f:setPropertyActionListener value="#{pqrs}" target="#{pqrsBean.selectedPqrs}" />
+						<h:outputText value="#{pqrs.codigo}" />
+					</p:commandLink>
+					<h:outputText value="#{pqrs.codigo}, #{pqrs.tipo}" style="display:inline-block"/>
+				</p:dataList>
+			</h:form>
+
+			<hr />
+      
+      <p:panelGrid  columns="2" rendered="#{not empty pqrsBean.selectedPqrs}" columnClasses="label,value">
+        <h:outputText value="#{msg.codigo}" />
+        <h:outputText value="#{pqrsBean.selectedPqrs.codigo}" />
+
+        <h:outputText value="#{msg.tipo}" />
+        <h:outputText value="#{pqrsBean.selectedPqrs.tipo}" />
+
+        <h:outputText value="#{msg.cliente}" />
+        <h:outputText value="#{pqrsBean.selectedPqrs.tipoDocCliente} #{pqrsBean.selectedPqrs.numeroDocCliente}"/>
+
+        <h:outputText value="#{msg.fecha}" />
+        <h:outputText value="#{pqrsBean.selectedPqrs.fechaPQRS}" />
+
+        <h:outputText value="#{msg.fecha_hechos}" />
+        <h:outputText value="#{pqrsBean.selectedPqrs.fechaHechos}" />
+
+        <h:outputText value="#{msg.aeropuerto}" />
+        <h:outputText value="#{pqrsBean.selectedPqrs.codigoAeropuerto}" />
+
+        <h:outputText value="#{msg.descripcion}" />
+        <h:outputText value="#{pqrsBean.selectedPqrs.descripcion}" />
+      </p:panelGrid>
+      
+      <h:form>
+        <p:panelGrid rendered="#{not empty pqrsBean.selectedAnexos}" columnClasses="label,value">
+          <p:row>
+            <p:column colspan="2">Anexos</p:column>
+          </p:row>
+          <c:forEach items="#{pqrsBean.selectedAnexos}" var="anexo">
+            <p:row>
+              <p:column>
+                <h:outputText value="#{anexo.name}" />
+              </p:column>
+              <p:column>
+                <p:commandButton value="Descargar" ajax="false" icon="ui-icon-arrowthick-1-s">
+                  <p:fileDownload value="#{pqrsBean.descargar(anexo)}" />
+                </p:commandButton>
+              </p:column>
+            </p:row>
+          </c:forEach>
+        </p:panelGrid>
+
+      </h:form>
+
+      <p:panelGrid rendered="#{not empty pqrsBean.selectedEstados}" columnClasses="label,value">
+        <p:row>
+          <p:column colspan="2">Estados</p:column>
+        </p:row>
+        <c:forEach items="#{pqrsBean.selectedEstados}" var="estado">
+          <p:row>
+            <p:column>
+              <h:outputText value="#{msg.codigo}" />
+            </p:column>
+            <p:column>
+              <h:outputText value="#{estado.estadoPK.codigo}" />
+            </p:column>
+          </p:row>
+          <p:row>
+            <p:column>
+              <h:outputText value="#{msg.fecha}" />
+            </p:column>
+            <p:column>
+              <h:outputText value="#{estado.fecha}" />
+            </p:column>
+          </p:row>
+          <p:row>
+            <p:column>
+              <h:outputText value="Estado" />
+            </p:column>
+            <p:column>
+              <h:outputText value="#{estado.estado}" />
+            </p:column>
+          </p:row>
+          <p:row>
+            <p:column>
+              <h:outputText value="#{msg.descripcion}" />
+            </p:column>
+            <p:column>
+              <h:outputText value="#{estado.descripcion}" />
+            </p:column>
+          </p:row>
+        </c:forEach>
+      </p:panelGrid>
+
+      <form action="estado.jsp" method="POST">
+        
+        <p:panelGrid rendered="#{not empty pqrsBean.selectedPqrs}" columnClasses="label,value">
+          <p:row>
+            <p:column colspan="2">Agregar estado</p:column>
+          </p:row>
+          <p:row>
+            <p:column>
+              <h:outputText value="Estado" />
+            </p:column>
+            <p:column>
+              <input type="text" name="estado" required="true" />
+            </p:column>
+          </p:row>
+          <p:row>
+            <p:column>
+              <h:outputText value="#{msg.descripcion}" />
+            </p:column>
+            <p:column>
+              <input type="text" name="descripcion" required="true" />
+            </p:column>
+          </p:row>
+          
+          <p:row>
+            <p:column colspan="2">
+              <input type="submit" value="Agregar" />
+            </p:column>
+          </p:row>
+
+          <input type="hidden" name="codigoPQRS" value="#{pqrsBean.selectedPqrs.codigo}" />
+          <input type="hidden" name="numeroDocPersonal" value="#{personalBean.personal.personalPK.numeroDocumento}" />
+          <input type="hidden" name="tipoDocPersonal" value="#{personalBean.personal.personalPK.tipoDocumento}" />
+        </p:panelGrid>
+      </form>
+
+			<c:if test="#{not empty pqrsBean.error}">
+				<h:outputText style="color: #FF0000" value="#{pqrsBean.error}" />
+			</c:if>
+		</c:if>
+		<c:if test="#{empty clienteBean.cliente and empty personalBean.personal}">
+			<h3>#{msg.identificar_titulo}</h3>
+
+			<p:tabView>
+				<p:tab title="#{msg.cliente_titulo}">
+					<div class="ui-grid ui-grid-responsive">
+						<div class="ui-grid-row">
+							<div class="ui-grid-col-6">
+								<h:form prependId="false">
+									<h:panelGrid columns="3">
+										<p:outputLabel for="tipoDocumento" value="#{msg.tipo_documento}" />
+										<p:selectOneMenu id="tipoDocumento" value="#{clienteBean.tipoDocumento}">
+											<f:selectItem itemLabel="#{msg.cc}" itemValue="cc" />
+											<f:selectItem itemLabel="#{msg.ce}" itemValue="ce" />
+											<f:selectItem itemLabel="#{msg.ti}" itemValue="ti" />
+											<f:selectItem itemLabel="#{msg.pa}" itemValue="pa" />
+										</p:selectOneMenu>
+										<p:message for="tipoDocumento" styleClass="errmsg" />
+
+										<p:outputLabel value="#{msg.numero_documento}" for="numero_documento" />
+										<p:inputText id="numero_documento" label="#{msg.numero_documento}" value="#{clienteBean.numeroDocumento}" required="true">
+											<f:attribute name="requiredMessage" value="#{msg.numero_documento_requerido}" />
+										</p:inputText>
+										<p:message for="numero_documento" styleClass="errmsg" />
+
+										<p:outputLabel value="#{msg.nombres}" for="nombres" />
+										<p:inputText id="nombres" label="#{msg.nombres}" value="#{clienteBean.nombres}" required="true">
+											<f:attribute name="requiredMessage" value="#{msg.nombres_requerido}" />
+										</p:inputText>
+										<p:message for="nombres" styleClass="errmsg" />
+
+										<p:outputLabel value="#{msg.apellidos}" for="apellidos" />
+										<p:inputText id="apellidos" label="#{msg.apellidos}" value="#{clienteBean.apellidos}" required="true">
+											<f:attribute name="requiredMessage" value="#{msg.apellidos_requerido}" />
+										</p:inputText>
+										<p:message for="apellidos" styleClass="errmsg" />
+
+										<p:outputLabel value="#{msg.telefono}" for="telefono" />
+										<p:inputText id="telefono" label="#{msg.telefono}" value="#{clienteBean.telefono}" required="true">
+											<f:attribute name="requiredMessage" value="#{msg.telefono_requerido}" />
+											<f:validateLength minimum="7" maximum="10" />
+										</p:inputText>
+										<p:message for="telefono" styleClass="errmsg" />
+
+										<p:outputLabel for="paisResidencia" value="#{msg.pais}" />
+										<p:selectOneMenu id="paisResidencia" value="#{clienteBean.paisResidencia}">
+											<f:selectItem itemLabel="Colombia" itemValue="colombia" />
+											<f:selectItem itemLabel="Ecuador" itemValue="ecuador" />
+											<f:selectItem itemLabel="Venezuela" itemValue="venezuela" />
+											<f:selectItem itemLabel="Sudafrica" itemValue="sudafrica" />
+											<f:selectItem itemLabel="USA" itemValue="usa" />
+											<f:selectItem itemLabel="Canada" itemValue="canada" />
+											<f:selectItem itemLabel="Mexico" itemValue="mexico" />
+											<f:selectItem itemLabel="Brasil" itemValue="brasil" />
+											<f:selectItem itemLabel="Argentina" itemValue="argentina" />
+											<f:selectItem itemLabel="China" itemValue="china" />
+											<f:selectItem itemLabel="Japon" itemValue="japon" />
+											<f:selectItem itemLabel="India" itemValue="india" />
+											<f:selectItem itemLabel="Indonesia" itemValue="indonesia" />
+											<f:selectItem itemLabel="Rusia" itemValue="rusia" />
+											<f:selectItem itemLabel="Turquia" itemValue="turquia" />
+											<f:selectItem itemLabel="Alemania" itemValue="alemania" />
+											<f:selectItem itemLabel="Francia" itemValue="francia" />
+											<f:selectItem itemLabel="Australia" itemValue="australia" />
+											<f:selectItem itemLabel="Italia" itemValue="italia" />
+										</p:selectOneMenu>
+										<p:message for="paisResidencia" styleClass="errmsg" />
+
+										<p:outputLabel for="ciudadResidencia" value="#{msg.ciudad}" />
+										<p:selectOneMenu id="ciudadResidencia" value="#{clienteBean.ciudadResidencia}">
+											<f:selectItem itemLabel="Medellin" itemValue="medellin" />
+											<f:selectItem itemLabel="Bógota" itemValue="bogota" />
+											<f:selectItem itemLabel="Cali" itemValue="cali" />
+										</p:selectOneMenu>
+										<p:message for="ciudadResidencia" styleClass="errmsg" />
+
+										<p:outputLabel for="nacionalidad" value="#{msg.nacionalidad}" />
+										<p:selectOneMenu id="nacionalidad" value="#{clienteBean.nacionalidad}">
+											<f:selectItem itemLabel="Colombiano" itemValue="colombiano" />
+											<f:selectItem itemLabel="Ecuatoriano" itemValue="ecuatoriano" />
+											<f:selectItem itemLabel="Venezolano" itemValue="venezolano" />
+										</p:selectOneMenu>
+										<p:message for="nacionalidad" styleClass="errmsg" />
+
+										<p:outputLabel value="#{msg.direccion}" for="direccion" />
+										<p:inputText id="direccion" label="#{msg.direccion}" value="#{clienteBean.direccion}" required="true">
+											<f:attribute name="requiredMessage" value="#{msg.direccion_requerido}" />
+										</p:inputText>
+										<p:message for="direccion" styleClass="errmsg" />
+
+										<p:outputLabel value="#{msg.correo_electronico}" for="correoElectronico" />
+										<p:inputText id="correoElectronico" label="#{msg.correo_electronico}" value="#{clienteBean.correoElectronico}" required="true">
+											<f:attribute name="requiredMessage" value="#{msg.correo_electronico_requerido}" />
+										</p:inputText>
+										<p:message for="correoElectronico" styleClass="errmsg" />
+
+										<p:outputLabel value="#{msg.contrasena}" for="contrasena" />
+										<p:password id="contrasena" label="#{msg.contrasena}" value="#{clienteBean.contrasena}" required="true">
+											<f:attribute name="requiredMessage" value="#{msg.contrasena_requerida}" />
+										</p:password>
+										<p:message for="contrasena" styleClass="errmsg" />
+
+										<p:commandButton id="botonRegistro" value="#{msg.registro}" actionListener="#{clienteBean.registro}" ajax="false" />
+									</h:panelGrid>
+								</h:form>
+							</div>
+							<div class="ui-grid-col-6">
+								<h:form prependId="false">
+									<h:panelGrid columns="3">
+										<p:outputLabel value="#{msg.correo_electronico}" for="correoElectronico1" />
+										<p:inputText id="correoElectronico1" label="#{msg.correo_electronico}" value="#{clienteBean.correoElectronico}" required="true">
+											<f:attribute name="requiredMessage" value="#{msg.correo_electronico_requerido}" />
+										</p:inputText>
+										<p:message for="correoElectronico1" styleClass="errmsg" />
+
+										<p:outputLabel value="#{msg.contrasena}" for="contrasena1" />
+										<p:password id="contrasena1" label="#{msg.contrasena}" value="#{clienteBean.contrasena}" required="true">
+											<f:attribute name="requiredMessage" value="#{msg.contrasena_requerida}" />
+										</p:password>
+										<p:message for="contrasena1" styleClass="errmsg" />
+
+										<p:commandButton id="botonInicio" value="#{msg.inicio_sesion}" actionListener="#{clienteBean.inicioSesion}" ajax="false" />
+									</h:panelGrid>
+								</h:form>
+
+							</div>
+						</div>
+					</div>
+				</p:tab>
+				<p:tab title="#{msg.personal_titulo}">
+					<h:form prependId="false">
+						<h:panelGrid columns="3">
+							<p:outputLabel value="#{msg.correo_electronico}" for="correoElectronico2" />
+							<p:inputText id="correoElectronico2" label="#{msg.correo_electronico}" value="#{personalBean.correoElectronico}" required="true">
+								<f:attribute name="requiredMessage" value="#{msg.correo_electronico_requerido}" />
+							</p:inputText>
+							<p:message for="correoElectronico2" styleClass="errmsg" />
+
+							<p:outputLabel value="#{msg.contrasena}" for="contrasena2" />
+							<p:password id="contrasena2" label="#{msg.contrasena}" value="#{personalBean.contrasena}" required="true">
+								<f:attribute name="requiredMessage" value="#{msg.contrasena_requerida}" />
+							</p:password>
+							<p:message for="contrasena2" styleClass="errmsg" />
+
+							<c:if test="#{not empty personalBean.error}">
+								<h:outputText style="color: #FF0000" value="#{personalBean.error}" />
+							</c:if>
+
+							<p:commandButton id="botonInicio1" value="#{msg.inicio_sesion}" actionListener="#{personalBean.inicioSesion}" ajax="false" />
+						</h:panelGrid>
+					</h:form>
+				</p:tab>
+			</p:tabView>
+		</c:if>
+
+		<script library="primefaces" name="jquery/jquery.js" />
+	</h:body>
+</html>
+
